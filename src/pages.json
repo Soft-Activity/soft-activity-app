@@ -1,0 +1,74 @@
+{
+	// 组件自动导入
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			// uni-ui 规则如下配置  
+			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+		}
+	},
+	"pages": [
+		{
+			"path": "pages/category/category",
+			"style": {
+				"navigationBarTitleText": "分类"
+			}
+		},
+		{
+			"path": "pages/activity/detail",
+			"style": {
+				"navigationBarTitleText": "活动详情"
+			}
+		},
+		{
+			"path": "pages/my/index",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/auth/index",
+			"style": {
+				"navigationBarTitleText": "用户认证"
+			}
+		},
+		{
+			"path": "pages/category/category-activities",
+			"style": {
+				"navigationBarTitleText": "活动列表",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/activity/index",
+			"style": {
+				"navigationBarTitleText": "活动"
+			}
+		}
+	],
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#018d71",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/category/category",
+				"text": "分类",
+				"iconPath": "static/tap1.png",
+				"selectedIconPath": "static/tap1-active.png"
+			},
+			{
+				"pagePath": "pages/activity/index",
+				"text": "活动",
+				"iconPath": "static/tap2.png",
+				"selectedIconPath": "static/tap2-active.png"
+			},
+			{
+				"pagePath": "pages/my/index",
+				"text": "我的",
+				"iconPath": "static/tap3.png",
+				"selectedIconPath": "static/tap3-active.png"
+			}
+		]
+	}
+}
