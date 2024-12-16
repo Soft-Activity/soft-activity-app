@@ -10,20 +10,24 @@ export enum ActivityStatus {
 
 // 活动接口
 export interface Activity {
-  activityId: number
-  name: string
-  organizerId: string
-  categoryId: number
-  location: string
-  description: string
-  status: ActivityStatus
-  startTime: string
-  endTime: string
-  maxCapacity: number
-  capacity: number
-  createTime: string
+  activityId?: number
+  name?: string
+  organizerId?: string
+  categoryId?: number
+  location?: string
+  description?: string
+  status?: ActivityStatus
+  startTime?: string
+  endTime?: string
+  maxCapacity?: number
+  capacity?: number
+  createTime?: string
 }
 
+export interface HistoryActivity extends Activity {
+  rating?: number
+  comments?: Comment[]
+}
 // 活动列表查询参数
 export interface ActivityQuery {
   categoryId?: number
@@ -48,18 +52,6 @@ export const ActivityStatusClass: Record<ActivityStatus, string> = {
   [ActivityStatus.ENDED]: 'status-ended'
 } 
 
-export interface HistoryActivity {
-  activityId: string
-  name: string
-  categoryId: number
-  location: string
-  startTime: string
-  endTime: string
-  capacity: number
-  maxCapacity: number
-  rating: number
-  comments?: Comment[]
-}
 
 export const getCategoryName = (categoryId: number): string => {
   const categories: Record<number, string> = {
