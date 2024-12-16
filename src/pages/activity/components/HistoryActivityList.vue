@@ -13,12 +13,7 @@
         <view class="activity-header">
           <text class="activity-name">{{ activity.name }}</text>
           <view class="rating">
-            <text 
-              v-for="i in 5" 
-              :key="i"
-              class="star"
-              :class="{ active: i <= activity.rating }"
-            >★</text>
+            <uni-rate :value="activity.rating" readonly size="15"/>
           </view>
         </view>
         
@@ -89,6 +84,7 @@ const handleActivityClick = (activity: HistoryActivity) => {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
+  padding: 20rpx;
 }
 
 .activity-card {

@@ -119,8 +119,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
-import ActivityList from './components/ActivityList.vue'
-import HistoryActivityList from './components/HistoryActivityList.vue'
+import  ActivityList  from './components/ActivityList.vue'
+import  HistoryActivityList  from './components/HistoryActivityList.vue'
 import type { Activity, HistoryActivity } from '@/types/activity';
 import { generateCategoryGradient } from '@/utils/colors'
 
