@@ -44,6 +44,19 @@
 			"style": {
 				"navigationBarTitleText": "活动"
 			}
+		},
+		{
+			"path": "pages/my/my-activities",
+			"style": {
+				"navigationBarTitleText": "我的活动"
+			}
+		},
+		{
+			"path": "pages/my/ai-chat",
+			"style": {
+				"navigationBarTitleText": "智能咨询",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"tabBar": {
