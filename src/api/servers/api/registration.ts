@@ -17,6 +17,20 @@ export async function addRegistration(
   });
 }
 
+/** 取消报名 DELETE /registration/cancel/${param0} */
+export async function cancelRegister(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.cancelRegisterParams,
+  options?: { [key: string]: any }
+) {
+  const { activityId: param0, ...queryParams } = params;
+  return request<boolean>(`/registration/cancel/${param0}`, {
+    method: "DELETE",
+    params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
 /** 删除指定报名表 DELETE /registration/delete/${param0} */
 export async function deleteRegistration(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
@@ -31,21 +45,6 @@ export async function deleteRegistration(
   });
 }
 
-/** 取消报名 POST /registration/cancel */
-export async function cancelRegistration(
-  body: API.Registration,
-  options?: { [key: string]: any }
-) {
-  return request<boolean>("/registration/cancel", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
 /** 获取指定报名表信息 GET /registration/info/${param0} */
 export async function getRegistration(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
@@ -54,6 +53,20 @@ export async function getRegistration(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.RegistrationVO>(`/registration/info/${param0}`, {
+    method: "GET",
+    params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
+/** 获取我是否报名过活动 GET /registration/is-apply/${param0} */
+export async function isRegister(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.isRegisterParams,
+  options?: { [key: string]: any }
+) {
+  const { activityId: param0, ...queryParams } = params;
+  return request<boolean>(`/registration/is-apply/${param0}`, {
     method: "GET",
     params: { ...queryParams },
     ...(options || {}),
@@ -77,6 +90,20 @@ export async function getRegistrations(
       param: undefined,
       ...params["param"],
     },
+    ...(options || {}),
+  });
+}
+
+/** 报名活动 POST /registration/register/${param0} */
+export async function registerActivity(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.registerActivityParams,
+  options?: { [key: string]: any }
+) {
+  const { activityId: param0, ...queryParams } = params;
+  return request<boolean>(`/registration/register/${param0}`, {
+    method: "POST",
+    params: { ...queryParams },
     ...(options || {}),
   });
 }

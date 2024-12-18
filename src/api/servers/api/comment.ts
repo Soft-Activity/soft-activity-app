@@ -2,7 +2,7 @@
 /* eslint-disable */
 import { request } from "@/api/request";
 
-/** 添加 POST /comment/add */
+/** 添加评论 POST /comment/add */
 export async function addComment(
   body: API.Comment,
   options?: { [key: string]: any }
@@ -39,6 +39,20 @@ export async function getComment(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.CommentVO>(`/comment/info/${param0}`, {
+    method: "GET",
+    params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
+/** 获取我是否评论过活动 GET /comment/is-comment/${param0} */
+export async function isComment(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.isCommentParams,
+  options?: { [key: string]: any }
+) {
+  const { activityId: param0, ...queryParams } = params;
+  return request<boolean>(`/comment/is-comment/${param0}`, {
     method: "GET",
     params: { ...queryParams },
     ...(options || {}),

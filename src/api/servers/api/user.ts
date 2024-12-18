@@ -134,6 +134,28 @@ export async function loginByWx(
   });
 }
 
+/** 微信自行解绑 POST /user/unbind-wx-self */
+export async function unbindMyWx(options?: { [key: string]: any }) {
+  return request<boolean>("/user/unbind-wx-self", {
+    method: "POST",
+    ...(options || {}),
+  });
+}
+
+/** 微信解绑 POST /user/unbind-wx/${param0} */
+export async function unbindWxByUserId(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.unbindWXByUserIdParams,
+  options?: { [key: string]: any }
+) {
+  const { userId: param0, ...queryParams } = params;
+  return request<boolean>(`/user/unbind-wx/${param0}`, {
+    method: "POST",
+    params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
 /** 修改指定用户信息 PUT /user/update/${param0} */
 export async function updateUser(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

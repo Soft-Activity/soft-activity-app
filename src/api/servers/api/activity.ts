@@ -66,6 +66,27 @@ export async function getActivitys(
   });
 }
 
+/** 获取我的列表 GET /activity/list-self */
+export async function getMyActivitys(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getMyActivitysParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.ListResultActivityVO>("/activity/list-self", {
+    method: "GET",
+    params: {
+      // current has a default value: 1
+      current: "1",
+      // pageSize has a default value: 10
+      pageSize: "10",
+      ...params,
+      param: undefined,
+      ...params["param"],
+    },
+    ...(options || {}),
+  });
+}
+
 /** 修改指定信息 PUT /activity/update/${param0} */
 export async function updateActivity(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

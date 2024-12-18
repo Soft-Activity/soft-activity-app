@@ -31,7 +31,7 @@ declare namespace API {
     activityId?: number;
     /** 活动名称 */
     name?: string;
-    /** 组织者学号 */
+    /** 组织者学号id */
     organizerId?: string;
     /** 分类id */
     categoryId?: number;
@@ -39,7 +39,7 @@ declare namespace API {
     location?: string;
     /** 描述 */
     description?: string;
-    /** 是否取消 0未取消，1取消 */
+    /** 是否取消 0未开始 1进行中 2 已结束 3 已取消 */
     status?: number;
     /** 活动开始时间 */
     startTime?: string;
@@ -103,6 +103,8 @@ declare namespace API {
     categoryId?: number;
     /** 分类名称 */
     name?: string;
+    /** 描述 */
+    description?: string;
   };
 
   type ActivityCategoryQuery = {
@@ -110,6 +112,40 @@ declare namespace API {
     categoryId?: number;
     /** 分类名称 */
     name?: string;
+    /** 描述 */
+    description?: string;
+  };
+
+  type ActivityCategoryStatQuery = {
+    /** 分类id */
+    categoryId?: number;
+    /** 分类名称 */
+    name?: string;
+    /** 描述 */
+    description?: string;
+  };
+
+  type ActivityCategoryStatVO = {
+    /** 分类id */
+    categoryId?: number;
+    /** 分类名称 */
+    name?: string;
+    /** 描述 */
+    description?: string;
+    /** 总活动数 */
+    totalActivities?: number;
+    /** 未开始活动数 */
+    notStarted?: number;
+    /** 进行中活动数 */
+    ongoing?: number;
+    /** 已结束活动数 */
+    ended?: number;
+    /** 已取消活动数 */
+    cancelled?: number;
+    /** 总参与人数 */
+    totalParticipants?: number;
+    /** 总容量 */
+    totalCapacity?: number;
   };
 
   type ActivityCategoryVO = {
@@ -117,6 +153,8 @@ declare namespace API {
     categoryId?: number;
     /** 分类名称 */
     name?: string;
+    /** 描述 */
+    description?: string;
   };
 
   type ActivityQuery = {
@@ -124,7 +162,7 @@ declare namespace API {
     activityId?: number;
     /** 活动名称 */
     name?: string;
-    /** 组织者学号 */
+    /** 组织者学号id */
     organizerId?: string;
     /** 分类id */
     categoryId?: number;
@@ -132,7 +170,7 @@ declare namespace API {
     location?: string;
     /** 描述 */
     description?: string;
-    /** 是否取消 0未取消，1取消 */
+    /** 是否取消 0未开始 1进行中 2 已结束 3 已取消 */
     status?: number;
     /** 活动开始时间 */
     startTime?: string;
@@ -144,6 +182,16 @@ declare namespace API {
     capacity?: number;
     /** 创建时间 */
     createTime?: string;
+    /** 状态 */
+    statuses?: number[];
+    /** 分类名称 */
+    categoryName?: string;
+    /** 组织者姓名 */
+    organizerName?: string;
+    /** 参与学生id */
+    studentId?: string;
+    /** 参与学生是否评论 */
+    isStudentComment?: boolean;
   };
 
   type ActivityVO = {
@@ -151,7 +199,7 @@ declare namespace API {
     activityId?: number;
     /** 活动名称 */
     name?: string;
-    /** 组织者学号 */
+    /** 组织者学号id */
     organizerId?: string;
     /** 分类id */
     categoryId?: number;
@@ -159,7 +207,7 @@ declare namespace API {
     location?: string;
     /** 描述 */
     description?: string;
-    /** 是否取消 0未取消，1取消 */
+    /** 是否取消 0未开始 1进行中 2 已结束 3 已取消 */
     status?: number;
     /** 活动开始时间 */
     startTime?: string;
@@ -171,6 +219,20 @@ declare namespace API {
     capacity?: number;
     /** 创建时间 */
     createTime?: string;
+    /** 分类名称 */
+    categoryName?: string;
+    /** 组织者姓名 */
+    organizerName?: string;
+    /** 平均评分 */
+    avgRating?: number;
+    /** 最近的评论 */
+    recentComments?: CommentVO[];
+    /** 评论总数 */
+    commentCount?: number;
+  };
+
+  type cancelRegisterParams = {
+    activityId: number;
   };
 
   type Comment = {
@@ -178,7 +240,7 @@ declare namespace API {
     commentId?: number;
     /** 报名id */
     activityId?: number;
-    /** 学生号 */
+    /** 学生用户id */
     studentId?: string;
     /** 评分0-5 */
     rating?: number;
@@ -193,7 +255,7 @@ declare namespace API {
     commentId?: number;
     /** 报名id */
     activityId?: number;
-    /** 学生号 */
+    /** 学生用户id */
     studentId?: string;
     /** 评分0-5 */
     rating?: number;
@@ -208,7 +270,7 @@ declare namespace API {
     commentId?: number;
     /** 报名id */
     activityId?: number;
-    /** 学生号 */
+    /** 学生用户id */
     studentId?: string;
     /** 评分0-5 */
     rating?: number;
@@ -216,6 +278,9 @@ declare namespace API {
     content?: string;
     /** 评论时间 */
     createTime?: string;
+    /** 活动名称 */
+    activityName?: string;
+    student?: UserVO;
   };
 
   type deleteAccountParams = {
@@ -284,6 +349,10 @@ declare namespace API {
     param: ActivityCategoryQuery;
   };
 
+  type getActivityCategoryStatisticsParams = {
+    param: ActivityCategoryStatQuery;
+  };
+
   type getActivityParams = {
     id: number;
   };
@@ -294,6 +363,10 @@ declare namespace API {
     param: ActivityQuery;
   };
 
+  type getClassListParams = {
+    college: string;
+  };
+
   type getCommentParams = {
     id: number;
   };
@@ -302,6 +375,12 @@ declare namespace API {
     current?: number;
     pageSize?: number;
     param: CommentQuery;
+  };
+
+  type getMyActivitysParams = {
+    current?: number;
+    pageSize?: number;
+    param: ActivityQuery;
   };
 
   type getRegistrationParams = {
@@ -342,6 +421,14 @@ declare namespace API {
     current?: number;
     pageSize?: number;
     param: UserQuery;
+  };
+
+  type isCommentParams = {
+    activityId: number;
+  };
+
+  type isRegisterParams = {
+    activityId: number;
   };
 
   type ListResultAccountVO = {
@@ -389,6 +476,10 @@ declare namespace API {
     total?: number;
   };
 
+  type registerActivityParams = {
+    activityId: number;
+  };
+
   type Registration = {
     /** 报名id */
     registrationId?: number;
@@ -396,7 +487,7 @@ declare namespace API {
     studentId?: string;
     /** 活动id */
     activityId?: number;
-    /** 报名状态 0 未开始、1 进行中、2 已结束、3 已取消 */
+    /** 报名状态 0 已报名 1 已取消 */
     status?: number;
     /** 报名时间 */
     createTime?: string;
@@ -409,7 +500,7 @@ declare namespace API {
     studentId?: string;
     /** 活动id */
     activityId?: number;
-    /** 报名状态 0 未开始、1 进行中、2 已结束、3 已取消 */
+    /** 报名状态 0 已报名 1 已取消 */
     status?: number;
     /** 报名时间 */
     createTime?: string;
@@ -422,7 +513,7 @@ declare namespace API {
     studentId?: string;
     /** 活动id */
     activityId?: number;
-    /** 报名状态 0 未开始、1 进行中、2 已结束、3 已取消 */
+    /** 报名状态 0 已报名 1 已取消 */
     status?: number;
     /** 报名时间 */
     createTime?: string;
@@ -512,6 +603,10 @@ declare namespace API {
     isVerified?: boolean;
   };
 
+  type unbindWXByUserIdParams = {
+    userId: string;
+  };
+
   type updateAccountParams = {
     id: string;
   };
@@ -557,6 +652,8 @@ declare namespace API {
     userId?: string;
     /** 姓名 */
     name?: string;
+    /** 学号 */
+    studentId?: string;
     /** 学院/部门 */
     college?: string;
     /** 图片路径 */
@@ -579,6 +676,8 @@ declare namespace API {
     userId?: string;
     /** 姓名 */
     name?: string;
+    /** 学号 */
+    studentId?: string;
     /** 学院/部门 */
     college?: string;
     /** 图片路径 */
@@ -592,6 +691,8 @@ declare namespace API {
     userId?: string;
     /** 姓名 */
     name?: string;
+    /** 学号 */
+    studentId?: string;
     /** 学院/部门 */
     college?: string;
     /** 图片路径 */
@@ -608,8 +709,8 @@ declare namespace API {
   type UserWXPasswordBindDTO = {
     /** 微信登录凭证 */
     code: string;
-    /** 学号 */
-    userId: string;
+    /** 学号/学工号 */
+    studentId: string;
     /** 密码 */
     password: string;
   };
@@ -632,10 +733,18 @@ declare namespace API {
     /** 性别 男/女 */
     gender: string;
     /** 是否已认证0为认证，1已认证 */
-    isVerified: boolean;
+    isVerified?: boolean;
   };
 
   type viewAvatarParams = {
+    filename: string;
+  };
+
+  type viewFileParams = {
+    filename: string;
+  };
+
+  type viewImageParams = {
     filename: string;
   };
 }

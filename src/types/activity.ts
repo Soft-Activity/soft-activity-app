@@ -2,10 +2,10 @@ import type { Comment } from './comment'
 
 // 活动状态枚举
 export enum ActivityStatus {
-  CANCELLED = 1,
-  NOT_STARTED = 2,
-  ONGOING = 3,
-  ENDED = 4
+  NOT_STARTED = 0,
+  ONGOING = 1,
+  ENDED = 2,
+  CANCELLED = 3,
 }
 
 // 活动接口

@@ -17,6 +17,28 @@ export async function addStudent(
   });
 }
 
+/** 获取学生班级列表 GET /student/class-list/${param0} */
+export async function getClassList(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getClassListParams,
+  options?: { [key: string]: any }
+) {
+  const { college: param0, ...queryParams } = params;
+  return request<string[]>(`/student/class-list/${param0}`, {
+    method: "GET",
+    params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
+/** 获取学生学院列表 GET /student/college-list */
+export async function getCollegeList(options?: { [key: string]: any }) {
+  return request<string[]>("/student/college-list", {
+    method: "GET",
+    ...(options || {}),
+  });
+}
+
 /** 删除指定学生 DELETE /student/delete/${param0} */
 export async function deleteStudent(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

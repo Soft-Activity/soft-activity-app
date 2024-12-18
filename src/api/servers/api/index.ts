@@ -11,6 +11,7 @@ import * as activityCategory from "./activityCategory";
 import * as activityAiReview from "./activityAiReview";
 import * as activity from "./activity";
 import * as account from "./account";
+import * as commonController from "./commonController";
 export default {
   user,
   student,
@@ -21,4 +22,5 @@ export default {
   activityAiReview,
   activity,
   account,
+  commonController,
 };

@@ -66,6 +66,23 @@ export async function getActivityCategorys(
   });
 }
 
+/** 获取活动分类统计列表 GET /activityCategory/statistics */
+export async function getActivityCategoryStatistics(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getActivityCategoryStatisticsParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.ActivityCategoryStatVO[]>("/activityCategory/statistics", {
+    method: "GET",
+    params: {
+      ...params,
+      param: undefined,
+      ...params["param"],
+    },
+    ...(options || {}),
+  });
+}
+
 /** 修改指定活动分类表信息 PUT /activityCategory/update/${param0} */
 export async function updateActivityCategory(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
