@@ -3,7 +3,7 @@
     <view class="category-list">
       <view 
         v-for="(item, index) in categories" 
-        :key="item.id"
+        :key="item.categoryId"
         class="category-card"
         :style="{ background: generateCategoryGradient(index) }"
         @tap="handleCategoryClick(item)"
@@ -13,7 +13,7 @@
           <text class="category-desc">{{ item.description }}</text>
           <view class="count-box">
             <text class="new-count">
-              <text class="count-number">({{ item.newCount }})</text> 
+              <text class="count-number">({{ (item?.notStarted || 0) + (item?.ongoing || 0) }})</text> 
               新活动
             </text>
             <text class="arrow-icon">›</text>
@@ -27,40 +27,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { generateCategoryGradient } from '@/utils/colors'
+import { getActivityCategoryStatistics } from '@/api/servers/api/activityCategory';
+import { onShow } from '@dcloudio/uni-app';
 
-interface Category {
-  id: number
-  name: string
-  description: string
-  newCount: number
+
+const categories = ref<API.ActivityCategoryStatVO[]>([])
+
+const fetchCategories = async () => {
+  const res = await getActivityCategoryStatistics({param:{}})
+  categories.value = res
 }
 
-const categories = ref<Category[]>([
-  { 
-    id: 1, 
-    name: '学术交流', 
-    description: '专家讲座、学术研讨、前沿分享',
-    newCount: 0 
-  },
-  { 
-    id: 2, 
-    name: '社会公益', 
-    description: '志愿服务、公益活动、社区关爱',
-    newCount: 2 
-  },
-  { 
-    id: 3, 
-    name: '体育竞技', 
-    description: '体育比赛、运动会、健身活动',
-    newCount: 2 
-  }
-])
+onShow(() => {
+  fetchCategories()
+})
 
-const handleCategoryClick = (category: Category) => {
+const handleCategoryClick = (category: API.ActivityCategoryStatVO) => {
   uni.navigateTo({
-    url: `/pages/category/category-activities?id=${category.id}&name=${encodeURIComponent(category.name)}`
+    url: `/pages/category/category-activities?id=${category.categoryId}&name=${encodeURIComponent(category?.name || '')}`
   })
 }
 </script>

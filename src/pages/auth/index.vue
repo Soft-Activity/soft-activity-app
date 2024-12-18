@@ -19,43 +19,92 @@
 
       <!-- 表单内容 -->
       <view class="form-content">
-        <!-- 基础认证信息 -->
-        <input 
-          class="input-item" 
-          type="text" 
-          :placeholder="role === 'student' ? '请输入学号' : '请输入工号'"
-          v-model="form.username"
-        />
-        
-        <!-- 教师才需要输入密码 -->
-        <input 
-          v-if="role === 'teacher'"
-          class="input-item" 
-          type="safe-password" 
-          placeholder="请输入密码"
-          v-model="form.password"
-        />
+        <!-- 教师认证表单 -->
+        <template v-if="role === 'teacher'">
+          <input 
+            class="input-item" 
+            type="text" 
+            placeholder="请输入工号"
+            v-model="form.studentId"
+          />
+          <input 
+            class="input-item" 
+            type="safe-password" 
+            placeholder="请输入密码"
+            v-model="form.password"
+          />
+        </template>
 
-        <!-- 学生特有信息 -->
+        <!-- 学生认证表单 -->
         <template v-if="role === 'student'">
+          <input 
+            class="input-item" 
+            type="text" 
+            placeholder="请输入学号"
+            v-model="form.studentId"
+          />
           <input 
             class="input-item" 
             type="text" 
             placeholder="请输入姓名"
             v-model="form.name"
           />
-          <input 
-            class="input-item" 
-            type="text" 
-            placeholder="请输入学院"
-            v-model="form.department"
-          />
-          <input 
-            class="input-item" 
-            type="text" 
-            placeholder="请输入班级"
-            v-model="form.className"
-          />
+          <picker 
+            class="input-item picker" 
+            mode="selector" 
+            :range="genderOptions" 
+            @change="handleGenderChange"
+          >
+            <text :class="{ placeholder: !form.gender }">
+              {{ form.gender || '请选择性别' }}
+            </text>
+          </picker>
+          <picker 
+            class="input-item picker" 
+            mode="selector" 
+            :range="gradeOptions" 
+            @change="handleGradeChange"
+          >
+            <text :class="{ placeholder: !form.grade }">
+              {{ form.grade ? `${form.grade}级` : '请选择年级' }}
+            </text>
+          </picker>
+          <picker 
+            class="input-item picker" 
+            mode="selector" 
+            :range="typeOptions" 
+            @change="handleTypeChange"
+          >
+            <text :class="{ placeholder: !form.type }">
+              {{ form.type || '请选择学生类型' }}
+            </text>
+          </picker>
+          <picker 
+            class="input-item picker" 
+            mode="selector" 
+            :range="collegeOptions" 
+            @change="handleCollegeChange"
+          >
+            <text :class="{ placeholder: !form.college }">
+              {{ isLoadingCollege ? '加载中...' : (form.college || '请选择学院') }}
+            </text>
+          </picker>
+          <picker 
+            class="input-item picker" 
+            mode="selector" 
+            :range="classOptions"
+            :disabled="!form.college  || isLoadingClasses"
+            @change="handleClassChange"
+          >
+            <text :class="{ placeholder: !form.classes }">
+              {{ 
+                isLoadingClasses 
+                  ? '加载中...' 
+                  : (form.classes || (!form.college  ? '请先选择学院' : '请选择班级'))
+              }}
+            </text>
+          </picker>
+          
         </template>
       </view>
 
@@ -65,29 +114,104 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { getClassList, getCollegeList } from '@/api/servers/api/student';
 
 const userStore = useUserStore()
 const role = ref('student')
 
+// 选项数据
+const genderOptions = ['男', '女']
+const gradeOptions = [2021, 2022, 2023, 2024]
+const typeOptions = ['本科生', '研究生', '博士生']
+const collegeOptions = ref<string[]>([])
+const classOptions = ref<string[]>([])
+// 班级选项映射
+const isLoadingCollege = ref(false)
+const isLoadingClasses = ref(false)
+
 // 表单数据
 const form = ref({
-  // 基础认证信息
-  username: '', // 学号/工号
-  password: '', // 密码
+  // 教师信息
+  username: '',
+  password: '',
   // 学生信息
-  name: '', // 姓名
-  department: '', // 学院
-  className: '', // 班级
+  studentId: '',
+  name: '',
+  gender: '',
+  college: '',
+  classes: '',
+  grade: null as number | null,
+  type: ''
 })
+
+//获取学院列表的函数
+const fetchCollegeList = async () => {
+  isLoadingCollege.value = true
+  const response = await getCollegeList()
+  console.log(response)
+  collegeOptions.value = response as string[]
+  isLoadingCollege.value = false
+}
+
+// 获取班级列表的函数
+const fetchClasses = async (college: string) => {
+  isLoadingClasses.value = true
+  try {
+    const response = await getClassList({
+      college,
+    })  
+    console.log(response)
+    classOptions.value = response as string[]
+  } catch (error) {
+    console.error('获取班级列表失败:', error)
+    uni.showToast({
+      title: '获取班级列表失败',
+      icon: 'none'
+    })
+  } finally {
+    isLoadingClasses.value = false
+  }
+}
+
+// 处理选择器变化
+const handleGenderChange = (e: any) => {
+  form.value.gender = genderOptions[e.detail.value]
+}
+
+const handleGradeChange = (e: any) => {
+  form.value.grade = gradeOptions[e.detail.value]
+}
+
+
+const handleCollegeChange = async (e: any) => {
+  form.value.college = collegeOptions.value[e.detail.value]
+  form.value.classes = '' // 清空已选择的班级
+  
+  await fetchClasses(form.value.college)
+  
+}
+
+const handleClassChange = (e: any) => {
+  form.value.classes = classOptions.value[e.detail.value]
+}
+const handleTypeChange = (e: any) => {
+  form.value.type = typeOptions[e.detail.value]
+}
+
+
 
 // 处理提交
 const handleSubmit = () => {
-  // 验证表单
+  console.log(role.value)
+  console.log(form.value)
   if (role.value === 'student') {
-    if (!form.value.username || !form.value.name || 
-        !form.value.department || !form.value.className) {
+    // 验证学生表单
+    if (!form.value.studentId || !form.value.name || !form.value.gender || 
+        !form.value.college || !form.value.classes || !form.value.grade || 
+        !form.value.type) {
+
       uni.showToast({
         title: '请填写完整信息',
         icon: 'none'
@@ -95,7 +219,8 @@ const handleSubmit = () => {
       return
     }
   } else {
-    if (!form.value.username || !form.value.password) {
+    // 验证教师表单
+    if (!form.value.studentId || !form.value.password) {
       uni.showToast({
         title: '请填写完整信息',
         icon: 'none'
@@ -103,34 +228,33 @@ const handleSubmit = () => {
       return
     }
   }
-
-  // 模拟登录成功
-  if (role.value === 'student') {
-    userStore.setUserInfo({
-      userId: form.value.username,
+  // 绑定
+  if(role.value === 'student'){
+    userStore.bindForStudent({
+      code: '',
+      studentId: form.value.studentId,
       name: form.value.name,
-      department: form.value.department,
-      avatar: '/static/default-avatar.png',
+      gender: form.value.gender,
+      college: form.value.college,
+      classes: form.value.classes,
+      grade: form.value.grade as number,
+      type: form.value.type
     })
-  } else {
-    userStore.setUserInfo({
-      userId: form.value.username,
-      name: '教师用户',
-      department: '教师',
-      avatar: '/static/default-avatar.png',
+  }else{
+    userStore.bindWithPassword({
+      code: '',
+      studentId: form.value.studentId,
+      password: form.value.password
     })
   }
 
-  uni.showToast({
-    title: '登录成功',
-    icon: 'success',
-    success: () => {
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
-    }
-  })
+
+
+  
 }
+onMounted(async () => {
+  await fetchCollegeList()
+})
 </script>
 
 <style scoped>
@@ -205,5 +329,27 @@ const handleSubmit = () => {
 
 .submit-btn:active {
   opacity: 0.8;
+}
+
+.picker {
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+}
+
+.placeholder {
+  color: #999;
+}
+
+/* 添加禁用状态样式 */
+.picker[disabled] {
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+/* 添加加载状态样式 */
+.picker.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style> 

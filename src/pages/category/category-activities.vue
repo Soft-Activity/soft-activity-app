@@ -26,10 +26,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import ActivityList from '../activity/components/ActivityList.vue'
-import type { Activity, ActivityQuery } from '@/types/activity'
+import { getActivitys } from '@/api/servers/api/activity';
 
-const activities = ref<Activity[]>([])
+const activities = ref<API.ActivityVO[]>([])
 const page = ref(1)
+const pageSize = ref(10)
 const isRefreshing = ref(false)
 const loadMoreStatus = ref<'more' | 'loading' | 'noMore'>('more')
 const categoryId = ref(0)
@@ -58,24 +59,17 @@ const loadActivities = async (isRefresh = false) => {
     loadMoreStatus.value = 'loading'
     
     // 模拟数据
-    const res = {
-      data: Array(10).fill(null).map((_, index) => ({
-        activityId: index + 1,
+    const res = await getActivitys({
+      current: page.value,
+      pageSize: pageSize.value,
+      param: {
         categoryId: categoryId.value,
-        name: `示例活动${index + 1}`,
-        organizerId: 'admin',
-        description: '这是一个示例活动',
-        status: Math.floor(Math.random() * 4) + 1, // 使用枚举值 1-4
-        location: '活动中心',
-        startTime: '2024-03-20 14:00',
-        endTime: '2024-03-20 16:00',
-        maxCapacity: 50,
-        capacity: Math.floor(Math.random() * 50),
-        createTime: new Date().toISOString()
-      }))
-    }
+        //@ts-ignore
+        statuses: '0,1'
+      }
+    })
 
-    const newActivities = (res.data || []) as Activity[]
+    const newActivities = (res.list || []) as API.ActivityVO[]
 
     if (isRefresh) {
       activities.value = newActivities
@@ -84,7 +78,7 @@ const loadActivities = async (isRefresh = false) => {
     }
 
     page.value++
-    loadMoreStatus.value = newActivities.length < 10 ? 'noMore' : 'more'
+    loadMoreStatus.value = newActivities.length < pageSize.value ? 'noMore' : 'more'
   } catch (error) {
     console.error('加载活动列表失败:', error)
     loadMoreStatus.value = 'more'

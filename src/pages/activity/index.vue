@@ -17,24 +17,24 @@
         v-for="tab in tabs" 
         :key="tab.key"
         class="tab-item"
-        :class="{ active: currentTab === tab.key }"
-        @tap="handleTabChange(tab.key)"
+        :class="{ active: searchConditions.currentTab === tab.key }"
+        @tap="handleTabChange(tab.key )"
       >
         {{ tab.name }}
       </view>
     </view>
 
     <!-- 热门活动 -->
-    <view v-if="currentTab === 'hot'" class="content">
+    <view v-if="searchConditions.currentTab === 'hot'" class="content">
       <!-- 活动分类网格 -->
       <view class="category-section">
         <!-- 分类网格 -->
         <view class="category-grid">
           <view 
             v-for="(category, index) in categories" 
-            :key="category.id"
+            :key="category.categoryId"
             class="category-item"
-            :class="{ active: searchConditions.categoryId === category.id }"
+            :class="{ active: searchConditions.categoryId === category.categoryId }"
             :style="{ background: generateCategoryGradient(index) }"
             @tap="handleCategoryClick(category)"
           >
@@ -47,7 +47,7 @@
       <view class="header-row">
         <view class="section-title">
           <text class="title-text">热门活动</text>
-          <text class="count-badge">{{ hotActivities.length }}</text>
+          <text class="count-badge">{{ hotActivitiesCount }}</text>
         </view>
         <view class="quick-filters">
           <view 
@@ -59,8 +59,11 @@
           </view>
           <view 
             class="filter-item"
-            :class="{ active: searchConditions.isMyParticipation }"
-            @tap="handleQuickFilter('myParticipation')"
+            :class="{ 
+              active: searchConditions.isMyParticipation,
+              disabled: !userStore.isLoggedIn
+            }"
+            @tap="userStore.isLoggedIn && handleQuickFilter('myParticipation')"
           >
             <text class="filter-text">我的参与</text>
           </view>
@@ -78,9 +81,9 @@
         <view class="category-grid">
           <view 
             v-for="(category, index) in categories" 
-            :key="category.id"
+            :key="category.categoryId"
             class="category-item"
-            :class="{ active: searchConditions.categoryId === category.id }"
+            :class="{ active: searchConditions.categoryId === category.categoryId }"
             :style="{ background: generateCategoryGradient(index) }"
             @tap="handleCategoryClick(category)"
           >
@@ -92,7 +95,7 @@
       <view class="header-row">
         <view class="section-title">
           <text class="title-text">历史活动</text>
-          <text class="count-badge">{{ historyActivities.length }}</text>
+          <text class="count-badge">{{ historyActivitiesCount }}</text>
         </view>
         <view class="quick-filters">
           <view 
@@ -104,8 +107,11 @@
           </view>
           <view 
             class="filter-item"
-            :class="{ active: searchConditions.isMyParticipation }"
-            @tap="handleQuickFilter('myParticipation')"
+            :class="{ 
+              active: searchConditions.isMyParticipation,
+              disabled: !userStore.isLoggedIn
+            }"
+            @tap="userStore.isLoggedIn && handleQuickFilter('myParticipation')"
           >
             <text class="filter-text">我的参与</text>
           </view>
@@ -121,53 +127,60 @@
 import { onMounted, ref, computed } from 'vue'
 import  ActivityList  from './components/ActivityList.vue'
 import  HistoryActivityList  from './components/HistoryActivityList.vue'
-import type { Activity, HistoryActivity } from '@/types/activity';
 import { generateCategoryGradient } from '@/utils/colors'
+import { getActivityCategorys } from '@/api/servers/api/activityCategory';
+import { getActivitys } from '@/api/servers/api/activity';
+import { useUserStore } from '@/stores/user';
+import { onShow } from '@dcloudio/uni-app';
+
+const userStore = useUserStore()
 
 const tabs = [
   { key: 'hot', name: '热门活动' },
   { key: 'history', name: '历史活动' }
 ]
 
-const categories = [
-  { id: 1, name: '学术交流' },
-  { id: 2, name: '社会公益' },
-  { id: 3, name: '体育竞技' }
-]
+const categories = ref<API.ActivityCategoryVO[]>([])
 
-const currentTab = ref('hot')
 const searchText = ref('')
-const currentCategory = ref<number | null>(null)
-const hotActivities = ref<Activity[]>([])
-const historyActivities = ref<HistoryActivity[]>([])
+const hotActivities = ref<API.ActivityVO[]>([])
+const hotActivitiesCount = ref(0)
+const historyActivities = ref<API.ActivityVO[]>([])
+const historyActivitiesCount = ref(0)
 
 // 添加查询条件的响应式变量
 const searchConditions = ref<{
   categoryId: number | null,
-  isMyParticipation: boolean
-}>({
+  isMyParticipation: boolean,
+  currentTab: 'hot' | 'history' |string,
+  searchText: string | null
+  }>({
   categoryId: null,
-  isMyParticipation: false
+  isMyParticipation: false,
+  currentTab: 'hot',
+  searchText: null
 })
 
 
 // 切换标签
 const handleTabChange = (tab: string) => {
-  currentTab.value = tab
+  searchConditions.value.currentTab = tab
+  console.log('tab',searchConditions.value)
   loadActivities()
 }
 
 // 搜索
 const handleSearch = () => {
+  searchConditions.value.searchText = searchText.value
   loadActivities()
 }
 
 // 点击分类
-const handleCategoryClick = (category: { id: number, name: string }) => {
-  if (searchConditions.value.categoryId === category.id) {
+const handleCategoryClick = (category: API.ActivityCategoryVO) => {
+  if (searchConditions.value.categoryId === category.categoryId) {
     searchConditions.value.categoryId = null
   } else {
-    searchConditions.value.categoryId = category.id
+    searchConditions.value.categoryId = category.categoryId || null
   }
   loadActivities()
 }
@@ -189,110 +202,55 @@ const handleQuickFilter = (type: 'default' | 'myParticipation') => {
   loadActivities()
 }
 
-const getCategoryName = () => {
-  if (!searchConditions.value.categoryId) return '全部'
-  const category = categories.find(c => c.id === searchConditions.value.categoryId)
-  return category ? category.name : '全部'
+//加载活动分类
+const loadCategories = async () => {
+  try {
+    const res = await getActivityCategorys(
+      {
+        current:1,
+        pageSize:100,
+        param: {
+        }
+    }
+    )
+    categories.value = res?.list || []
+  } catch (error) {
+    console.error('加载活动分类错误:', error)
+  }
 }
 
 // 加载活动数据
 const loadActivities = async () => {
-  // 使用模拟数据
-  if (currentTab.value === 'hot') {
-    // 加载热门活动
-    hotActivities.value = [
-      {
-        activityId: 1,
-        name: '2024春季学术研讨会',
-        organizerId: '1',
-        categoryId: 1,
-        location: '图书馆报告厅',
-        description: '春季学术研讨会',
-        status: 2,
-        startTime: '2024-04-15 09:00:00',
-        endTime: '2024-04-15 17:00:00',
-        maxCapacity: 150,
-        capacity: 120,
-        createTime: '2024-03-01 10:00:00'
-      },
-      {
-        activityId: 2,
-        name: '校园环保志愿行动',
-        organizerId: '2', 
-        categoryId: 2,
-        location: '校园广场',
-        description: '环保志愿活动',
-        status: 1,
-        startTime: '2024-04-20 14:00:00',
-        endTime: '2024-04-20 17:00:00',
-        maxCapacity: 100,
-        capacity: 50,
-        createTime: '2024-03-15 14:00:00'
-      },
-      {
-        activityId: 3,
-        name: '校际篮球联赛',
-        organizerId: '3',
-        categoryId: 3,
-        location: '体育馆',
-        description: '校际篮球比赛',
-        status: 3,
-        startTime: '2024-05-01 09:00:00',
-        endTime: '2024-05-03 17:00:00',
-        maxCapacity: 300,
-        capacity: 200,
-        createTime: '2024-03-20 09:00:00'
-      }
-    ]
-  } else {
-    // 加载历史活动
-    historyActivities.value = [
-      {
-        activityId: '1',
-        name: '2023冬季文化节',
-        categoryId: 4,
-        location: '学生活动中心',
-        startTime: '2023-12-20 10:00:00',
-        endTime: '2023-12-20 21:00:00',
-        capacity: 300,
-        maxCapacity: 400,
-        rating: 4.5,
-        comments: [
-          {
-            id: '1',
-            userName: '张三',
-            content: '活动很精彩',
-            rating: 5,
-            createTime: '2023-12-21 09:00:00'
-          }
-        ]
-      },
-      {
-        activityId: '2',
-        name: '秋季运动会',
-        categoryId: 3,
-        location: '运动场',
-        startTime: '2023-10-15 08:00:00',
-        endTime: '2023-10-15 17:00:00',
-        capacity: 500,
-        maxCapacity: 600,
-        rating: 4.8,
-        comments: [
-          {
-            id: '2',
-            userName: '李四',
-            content: '组织得很好',
-            rating: 5,
-            createTime: '2023-10-16 10:00:00'
-          }
-        ]
-      }
-    ]
+  // 根据筛选条件，获取不同的活动列表
+  const statuses = searchConditions.value.currentTab === 'hot' ? '0,1' : '2'
+  const userId = searchConditions.value.isMyParticipation ? useUserStore().userInfo?.userId : undefined
+  console.log('searchConditions',searchConditions.value)
+  console.log('userId',userId)
+  const res = await getActivitys({
+    current: 1,
+    pageSize: 1000,
+    param: {
+      ...(searchConditions.value.categoryId && { categoryId: Number(searchConditions.value.categoryId) }),
+      ...(searchConditions.value.searchText && { name: searchConditions.value.searchText }),
+      ...(userId && { studentId: userId }),
+      //@ts-ignore
+      statuses:statuses
+    }
+  })
+  
+  if(searchConditions.value.currentTab === 'hot'){
+    hotActivities.value = res?.list || []
+    hotActivitiesCount.value = res?.total || 0
+  }else{
+    historyActivities.value = res?.list || []
+    historyActivitiesCount.value = res?.total || 0
   }
 }
-onMounted(() => {
-  currentTab.value = 'hot'
-  loadActivities()
+onShow(async () => {
+  searchConditions.value.currentTab = 'hot'
+  await useUserStore().getUserInfo()
+  await loadCategories()
+  await loadActivities()
 })
 </script>
 
@@ -406,6 +364,14 @@ onMounted(() => {
   background: linear-gradient(to right, #2b6cb0, #4299e1);
   color: #fff;
   box-shadow: 0 4rpx 12rpx rgba(43, 108, 176, 0.2);
+}
+
+.filter-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #e2e8f0;
+  color: #a0aec0;
+  box-shadow: none;
 }
 
 .search-conditions {

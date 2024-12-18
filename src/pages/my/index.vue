@@ -6,7 +6,7 @@
       <view class="user-info" v-if="isLoggedIn">
         <text class="nickname">{{ userName }}</text>
         <view class="user-details">
-          <text class="user-id">{{ userId }}</text>
+          <text class="user-id">{{ studentId }}</text>
           <text class="department">{{ userDepartment }}</text>
         </view>
       </view>
@@ -21,7 +21,7 @@
       <!-- 活动相关菜单组 -->
       <view class="menu-group">
         <view class="menu-item" @tap="goToList('enrolled')">
-          <text>已报名活动</text>
+          <text>新活动</text>
           <view class="menu-right">
             <text class="count-text">{{ enrolledCount }}</text>
             <uni-icons type="right" size="16"></uni-icons>
@@ -67,35 +67,56 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { onShow } from '@dcloudio/uni-app';
+import { getMyActivitys } from '@/api/servers/api/activity';
+import { loginByWx } from '@/api/servers/api/user';
 
 const userStore = useUserStore()
 
 // 模拟用户数据
-onMounted(() => {
-  // 模拟设置用户信息
-  userStore.setUserInfo({
-    userId: '2022280381',
-    name: '张三',
-    department: '计算机科学与技术学院',
-    avatar: '/static/default-avatar.png',
-  })
+onShow(async () => {
+  await userStore.getUserInfo()
 })
 
 // 使用 computed 获取用户信息
 const isLoggedIn = computed(() => userStore.isLoggedIn)
-const userName = computed(() => userStore.name)
-const userId = computed(() => userStore.userId)
-const userDepartment = computed(() => userStore.department)
-const userAvatar = computed(() => userStore.avatar || '/static/default-avatar.png')
+const userName = computed(() => userStore.userInfo.name)
+const studentId = computed(() => userStore.userInfo.studentId)
+const userDepartment = computed(() => userStore.userInfo.college)
+const userAvatar = computed(() => userStore.userInfo.avatar || '/static/default-avatar.png')
 
 // 模拟活动数量数据
-const enrolledCount = ref(2)
-const historyCount = ref(5)
-const pendingCount = ref(1)
+const enrolledCount = ref(0)
+const historyCount = ref(0)
+const pendingCount = ref(0)
 
 const handleUserClick = () => {
   if (!isLoggedIn.value) {
-    goToAuth()
+    //尝试直接微信登录
+    uni.login({
+      success: async (res) => {
+        try{
+          const response = await loginByWx({code: res.code})
+          if(response.token){
+            userStore.setToken(response.token)
+            await userStore.getUserInfo()
+            await fetchActivityCount()
+            uni.showToast({
+              title: '登录成功', 
+              icon: 'none'
+            })
+          }else{
+            throw new Error('登录失败')
+          }
+        
+        }
+        //登录失败，跳转到认证
+        catch (error) {
+          console.error('登录失败:', error)
+          goToAuth()
+        }
+      }
+    })
   }
 }
 
@@ -124,7 +145,7 @@ const handleUnbind = () => {
     content: '确定要解除绑定吗？',
     success: (res) => {
       if (res.confirm) {
-        userStore.logout()
+        userStore.unbind()
         uni.showToast({
           title: '已解除绑定',
           icon: 'success'
@@ -133,6 +154,42 @@ const handleUnbind = () => {
     }
   })
 }
+
+const fetchActivityCount = async () => {
+  const enrolledRes = await getMyActivitys({
+    current: 0,
+    pageSize: 1000,
+    param: {
+      //@ts-ignore
+      statuses: '0,1'
+    }
+  })
+  enrolledCount.value = enrolledRes?.total || 0
+  const historyRes = await getMyActivitys({
+    current: 0,
+    pageSize: 1000,
+    param: {
+      //@ts-ignore
+      statuses: '2'
+    }
+  })
+  historyCount.value = historyRes?.total || 0
+  const pendingRes = await getMyActivitys({
+    current: 0,
+    pageSize: 1000,
+    param: {
+      //@ts-ignore
+      statuses: '2',
+      isStudentComment: false
+    }
+  })
+  pendingCount.value = pendingRes?.total || 0
+}
+
+onShow(async () => {
+  await userStore.getUserInfo()
+  await fetchActivityCount()
+})
 
 // 添加跳转方法
 const goToAiChat = () => {

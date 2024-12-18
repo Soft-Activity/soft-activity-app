@@ -37,25 +37,21 @@
 import { ref, computed, onMounted } from 'vue'
 import ActivityList from '../activity/components/ActivityList.vue'
 import HistoryActivityList from '../activity/components/HistoryActivityList.vue'
-import type { Activity, HistoryActivity } from '@/types/activity'
+import { getMyActivitys } from '@/api/servers/api/activity';
 
-// 定义活动类型映射
-type ActivityMap = {
-  enrolled: Activity[]
-  history: HistoryActivity[]
-  pending: HistoryActivity[]
-}
 
-const activities = ref<ActivityMap[keyof ActivityMap]>([])
+
+const activities = ref<API.ActivityVO[]>([])
 const page = ref(1)
+const pageSize = ref(10)
 const isRefreshing = ref(false)
 const loadMoreStatus = ref<'more' | 'loading' | 'noMore'>('more')
-const type = ref<keyof ActivityMap>('enrolled')
+const type = ref<'enrolled' | 'history' | 'pending'>('enrolled')
 
 // 获取空状态文本
 const getEmptyText = computed(() => {
   const textMap = {
-    'enrolled': '暂无已报名活动',
+    'enrolled': '暂无新活动',
     'history': '暂无历史活动',
     'pending': '暂无待评价活动'
   }
@@ -66,75 +62,31 @@ const getEmptyText = computed(() => {
 const loadActivities = async (isRefresh = false) => {
   try {
     loadMoreStatus.value = 'loading'
-    
-    const mockData: ActivityMap = {
-      enrolled: Array(10).fill(null).map((_, index) => ({
-        activityId: index + 1,
-        name: `已报名活动${index + 1}`,
-        status: 'not_started',
-        location: '活动中心',
-        startTime: '2024-03-20 14:00',
-        endTime: '2024-03-20 16:00',
-        maxCapacity: 50,
-        capacity: Math.floor(Math.random() * 50),
-        categoryId: Math.floor(Math.random() * 5) + 1,
-        organizerId: 'org_' + index,
-        description: '这是一个活动描述',
-        createTime: '2024-03-01 12:00:00'
-      })) ,
-      
-      history: Array(10).fill(null).map((_, index) => ({
-        activityId: index + 1,
-        name: `历史活动${index + 1}`,
-        status: 'ended',
-        location: '活动中心',
-        startTime: '2024-02-20 14:00',
-        endTime: '2024-02-20 16:00',
-        maxCapacity: 50,
-        capacity: 50,
-        categoryId: Math.floor(Math.random() * 5) + 1,
-        rating: Math.floor(Math.random() * 5) + 1,
-        organizerId: 'org_' + index,
-        description: '这是一个历史活动',
-        createTime: '2024-02-01 12:00:00',
-        comments: [
-          {
-            id: '1',
-            userName: '用户A',
-            content: '活动很精彩！',
-            rating: 5
-          }
-        ]
-      } )),
-      
-      pending: Array(10).fill(null).map((_, index) => ({
-        activityId: index + 1,
-        name: `待评价活动${index + 1}`,
-        status: 'ended',
-        location: '活动中心',
-        startTime: '2024-03-01 14:00',
-        endTime: '2024-03-01 16:00',
-        maxCapacity: 50,
-        capacity: 50,
-        categoryId: Math.floor(Math.random() * 5) + 1,
-        rating: 0,
-        organizerId: 'org_' + index,
-        description: '这是一个待评价活动',
-        createTime: '2024-03-01 12:00:00',
-        comments: []
-      }))
-    }
+    console.log('page',page.value)
+    console.log('isRefresh',isRefresh)
+    //根据switch的值，获取不同的活动列表
+    const statuses = type.value === 'enrolled' ? '0,1' : '2'
 
-    const newActivities = mockData[type.value]
+    const newActivities = await getMyActivitys(
+      {
+        current: page.value,
+        pageSize: pageSize.value,
+        param: {
+          //@ts-ignore
+          statuses,
+          ...(type.value === 'pending' ? {isStudentComment:false} : {})
+        }
+      }
+    )
 
     if (isRefresh) {
-      activities.value = newActivities
+      activities.value = newActivities.list || [] 
     } else {
-      activities.value = [...activities.value, ...newActivities]
+      activities.value = [...activities.value, ...(newActivities.list || [])]
     }
 
     page.value++
-    loadMoreStatus.value = newActivities.length < 10 ? 'noMore' : 'more'
+    loadMoreStatus.value = (newActivities.list || []).length < pageSize.value ? 'noMore' : 'more'
   } catch (error) {
     console.error('加载活动列表失败:', error)
     loadMoreStatus.value = 'more'

@@ -7,7 +7,7 @@
       @tap="handleActivityClick(activity)"
     >
       <view class="activity-cover" :style="{ background: generateActivityGradient(index) }">
-        <text class="activity-category">{{ getCategoryName(activity.categoryId) }}</text>
+        <text class="activity-category">{{ activity.categoryName }}</text>
       </view>
       <view class="activity-info">
         <view class="activity-header">
@@ -49,23 +49,23 @@ import { generateActivityGradient } from '@/utils/colors'
 import { getCategoryName } from '@/types/activity'
 
 const props = defineProps<{
-  activities: Activity[]
+  activities: API.ActivityVO[]
 }>()
 
-const formatTime = (time: string) => {
+const formatTime = (time: string | undefined) => {
   return dayjs(time).format('YYYY-MM-DD HH:mm')
 }
 
 
-const getStatusClass = (activity: Activity) => {
-  return ActivityStatusClass[activity.status]
+const getStatusClass = (activity: API.ActivityVO) => {
+  return ActivityStatusClass[activity.status as ActivityStatus]
 }
 
-const getStatusText = (activity: Activity) => {
-  return ActivityStatusText[activity.status]
+const getStatusText = (activity: API.ActivityVO) => {
+  return ActivityStatusText[activity.status as ActivityStatus]
 }
 
-const handleActivityClick = (activity: Activity) => {
+const handleActivityClick = (activity: API.ActivityVO) => {
   uni.navigateTo({
     url: `/pages/activity/detail?id=${activity.activityId}`
   })

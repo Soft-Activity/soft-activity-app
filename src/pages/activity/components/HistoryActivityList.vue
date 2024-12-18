@@ -7,13 +7,13 @@
       @tap="handleActivityClick(activity)"
     >
       <view class="activity-cover" :style="{ background: generateActivityGradient(index) }">
-        <text class="activity-category">{{ getCategoryName(activity.categoryId) }}</text>
+        <text class="activity-category">{{ activity.categoryName }}</text>
       </view>
       <view class="activity-info">
         <view class="activity-header">
           <text class="activity-name">{{ activity.name }}</text>
           <view class="rating">
-            <uni-rate :value="activity.rating" readonly size="15"/>
+            <uni-rate :value="activity?.avgRating || 0" readonly size="15"/>
           </view>
         </view>
         
@@ -36,17 +36,17 @@
           </view>
         </view>
 
-        <view class="comments" v-if="activity.comments?.length">
+        <view class="comments" v-if="activity?.commentCount && activity.commentCount > 0">
           <view 
-            v-for="comment in activity.comments.slice(0, 2)" 
-            :key="comment.id"
+            v-for="comment in activity.recentComments" 
+            :key="comment.commentId"
             class="comment-item"
           >
-            <text class="comment-user">{{ comment.userName }}：</text>
+            <text class="comment-user">{{ comment?.student?.name || '' }}：</text>
             <text class="comment-content">{{ comment.content }}</text>
           </view>
-          <text class="more-comments" v-if="activity.comments.length > 2">
-            查看全部{{ activity.comments.length }}条评论 >
+          <text class="more-comments" v-if="activity?.commentCount && activity?.commentCount > 2">
+            查看全部{{ activity?.commentCount || 0 }}条评论 >
           </text>
         </view>
       </view>
@@ -58,21 +58,18 @@
 import { defineProps } from 'vue'
 import dayjs from '@/utils/dayjs'
 import { generateActivityGradient } from '@/utils/colors'
-import type { HistoryActivity } from '@/types/activity'
-import { getCategoryName } from '@/types/activity'
-
 
 
 const props = defineProps<{
-  activities: HistoryActivity[]
+  activities: API.ActivityVO[]
 }>()
 
 
-const formatTime = (time: string) => {
+const formatTime = (time: string | undefined) => {
   return dayjs(time).format('YYYY-MM-DD HH:mm')
 }
 
-const handleActivityClick = (activity: HistoryActivity) => {
+const handleActivityClick = (activity: API.ActivityVO) => {
   uni.navigateTo({
     url: `/pages/activity/detail?id=${activity.activityId}`
   })
