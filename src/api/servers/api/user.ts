@@ -47,6 +47,21 @@ export async function bindWxByStudentInfo(
   });
 }
 
+/** 用户修改密码 POST /user/change-password */
+export async function changePassword(
+  body: API.UserChangePasswordDTO,
+  options?: { [key: string]: any }
+) {
+  return request<boolean>("/user/change-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
 /** 获取当前用户信息 GET /user/current */
 export async function getCurrentUser(options?: { [key: string]: any }) {
   return request<API.UserVO>("/user/current", {
@@ -125,6 +140,21 @@ export async function loginByWx(
   options?: { [key: string]: any }
 ) {
   return request<API.UserAuthVO>("/user/login-by-wx", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 重新设置学生密码 POST /user/reset-password */
+export async function resetPassword(
+  body: API.UserResetPasswordDTO,
+  options?: { [key: string]: any }
+) {
+  return request<boolean>("/user/reset-password", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

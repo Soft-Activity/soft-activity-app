@@ -17,16 +17,55 @@ export async function addStudent(
   });
 }
 
-/** 获取学生班级列表 GET /student/class-list/${param0} */
+/** 批量导入学生 POST /student/batch-import */
+export async function batchImportStudents(
+  body: {},
+  file?: File,
+  options?: { [key: string]: any }
+) {
+  const formData = new FormData();
+
+  if (file) {
+    formData.append("file", file);
+  }
+
+  Object.keys(body).forEach((ele) => {
+    const item = (body as any)[ele];
+
+    if (item !== undefined && item !== null) {
+      if (typeof item === "object" && !(item instanceof File)) {
+        if (item instanceof Array) {
+          item.forEach((f) => formData.append(ele, f || ""));
+        } else {
+          formData.append(ele, JSON.stringify(item));
+        }
+      } else {
+        formData.append(ele, item);
+      }
+    }
+  });
+
+  return request<API.ImportTotalResult>("/student/batch-import", {
+    method: "POST",
+    data: formData,
+    requestType: "form",
+    ...(options || {}),
+  });
+}
+
+/** 获取学生班级列表 GET /student/class-list */
 export async function getClassList(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.getClassListParams,
   options?: { [key: string]: any }
 ) {
-  const { college: param0, ...queryParams } = params;
-  return request<string[]>(`/student/class-list/${param0}`, {
+  return request<string[]>("/student/class-list", {
     method: "GET",
-    params: { ...queryParams },
+    params: {
+      ...params,
+      param: undefined,
+      ...params["param"],
+    },
     ...(options || {}),
   });
 }
@@ -49,6 +88,33 @@ export async function deleteStudent(
   return request<boolean>(`/student/delete/${param0}`, {
     method: "DELETE",
     params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
+/** 下载批量导入模板 GET /student/download-batch-import-template */
+export async function downloadStudentBatchImportTemplate(options?: {
+  [key: string]: any;
+}) {
+  return request<any>("/student/download-batch-import-template", {
+    method: "GET",
+    ...(options || {}),
+  });
+}
+
+/** 下载学生信息 GET /student/download-excel */
+export async function downloadStudentExcel(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.downloadStudentExcelParams,
+  options?: { [key: string]: any }
+) {
+  return request<any>("/student/download-excel", {
+    method: "GET",
+    params: {
+      ...params,
+      param: undefined,
+      ...params["param"],
+    },
     ...(options || {}),
   });
 }

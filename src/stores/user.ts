@@ -12,8 +12,17 @@ export const useUserStore = defineStore('user', () => {
   const getUserInfo = async () => {
     try {
       const response = await getCurrentUser()
-      
-      setUserInfo(response,!!response?.userId)
+      if(response.userId == null){
+        setUserInfo({},false)
+        clearToken()
+        throw "用户不存在"
+      }
+      if(!response.bindWX){
+        clearToken()
+        setUserInfo({},false)
+        throw "用户未绑定微信"
+      }
+      setUserInfo(response)
       return response
     } catch (error) {
       console.error('获取用户信息失败:', error)
@@ -76,6 +85,7 @@ export const useUserStore = defineStore('user', () => {
   }
   //登录
   const showLoginModal = async () => {
+    clearToken();
     uni.showModal({
       title: '登录确认',
       content: '是否确认登录?',
@@ -91,8 +101,6 @@ export const useUserStore = defineStore('user', () => {
                     title: '登录成功', 
                     icon: 'none'
                   })
-                  //跳转到首页
-                  uni.switchTab({ url: '/pages/my/index' })
                 }else{
                   throw "登录失败"
                 }

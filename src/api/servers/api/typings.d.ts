@@ -51,6 +51,16 @@ declare namespace API {
     capacity?: number;
     /** 创建时间 */
     createTime?: string;
+    /** 是否需要打卡 0否 1是 */
+    isCheckIn?: boolean;
+    /** 打卡地点ID */
+    checkInLocationId?: number;
+    /** 打卡范围(单位:米) */
+    checkInRadius?: number;
+    /** 打卡开始时间 */
+    checkInStartTime?: string;
+    /** 打卡结束时间 */
+    checkInEndTime?: string;
   };
 
   type ActivityAiReviewCreateParam = {
@@ -123,6 +133,12 @@ declare namespace API {
     name?: string;
     /** 描述 */
     description?: string;
+    /** 活动状态 */
+    activityStatus?: number;
+    /** 活动开始时间 */
+    activityStartTime?: string;
+    /** 活动结束时间 */
+    activityEndTime?: string;
   };
 
   type ActivityCategoryStatVO = {
@@ -132,6 +148,7 @@ declare namespace API {
     name?: string;
     /** 描述 */
     description?: string;
+    activityCount?: number;
     /** 总活动数 */
     totalActivities?: number;
     /** 未开始活动数 */
@@ -155,6 +172,61 @@ declare namespace API {
     name?: string;
     /** 描述 */
     description?: string;
+    activityCount?: number;
+  };
+
+  type ActivityCheckInParam = {
+    /** 活动id */
+    activityId: number;
+    /** 打卡经度 */
+    gcj02Longitude: number;
+    /** 打卡纬度 */
+    gcj02Latitude: number;
+  };
+
+  type ActivityLocation = {
+    /** 主键ID */
+    locationId?: number;
+    /** 地点名称 */
+    name?: string;
+    /** 纬度 */
+    lat?: number;
+    /** 经度 */
+    lng?: number;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
+  };
+
+  type ActivityLocationQuery = {
+    /** 主键ID */
+    locationId?: number;
+    /** 地点名称 */
+    name?: string;
+    /** 纬度 */
+    lat?: number;
+    /** 经度 */
+    lng?: number;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
+  };
+
+  type ActivityLocationVO = {
+    /** 主键ID */
+    locationId?: number;
+    /** 地点名称 */
+    name?: string;
+    /** 纬度 */
+    lat?: number;
+    /** 经度 */
+    lng?: number;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
   };
 
   type ActivityQuery = {
@@ -182,6 +254,16 @@ declare namespace API {
     capacity?: number;
     /** 创建时间 */
     createTime?: string;
+    /** 是否需要打卡 0否 1是 */
+    isCheckIn?: boolean;
+    /** 打卡地点ID */
+    checkInLocationId?: number;
+    /** 打卡范围(单位:米) */
+    checkInRadius?: number;
+    /** 打卡开始时间 */
+    checkInStartTime?: string;
+    /** 打卡结束时间 */
+    checkInEndTime?: string;
     /** 状态 */
     statuses?: number[];
     /** 分类名称 */
@@ -192,6 +274,18 @@ declare namespace API {
     studentId?: string;
     /** 参与学生是否评论 */
     isStudentComment?: boolean;
+    /** 参与学生是否打卡 */
+    isStudentCheckIn?: boolean;
+    sorter?: Sorter;
+  };
+
+  type ActivityRecentMonthStatVO = {
+    /** 日期 */
+    date?: string;
+    /** 活动数量 */
+    activityCount?: number;
+    /** 参与人数 */
+    totalParticipants?: number;
   };
 
   type ActivityVO = {
@@ -219,6 +313,16 @@ declare namespace API {
     capacity?: number;
     /** 创建时间 */
     createTime?: string;
+    /** 是否需要打卡 0否 1是 */
+    isCheckIn?: boolean;
+    /** 打卡地点ID */
+    checkInLocationId?: number;
+    /** 打卡范围(单位:米) */
+    checkInRadius?: number;
+    /** 打卡开始时间 */
+    checkInStartTime?: string;
+    /** 打卡结束时间 */
+    checkInEndTime?: string;
     /** 分类名称 */
     categoryName?: string;
     /** 组织者姓名 */
@@ -229,6 +333,14 @@ declare namespace API {
     recentComments?: CommentVO[];
     /** 评论总数 */
     commentCount?: number;
+    /** 已打卡人数 */
+    checkInCount?: number;
+    /** 打卡地点名称 */
+    checkInLocationName?: string;
+  };
+
+  type aiParams = {
+    userInput: string;
   };
 
   type cancelRegisterParams = {
@@ -281,6 +393,10 @@ declare namespace API {
     /** 活动名称 */
     activityName?: string;
     student?: UserVO;
+    /** 学院 */
+    collegeName?: string;
+    /** 学号 */
+    schoolId?: string;
   };
 
   type deleteAccountParams = {
@@ -292,6 +408,10 @@ declare namespace API {
   };
 
   type deleteActivityCategoryParams = {
+    id: number;
+  };
+
+  type deleteActivityLocationParams = {
     id: number;
   };
 
@@ -317,6 +437,10 @@ declare namespace API {
 
   type deleteUserParams = {
     id: string;
+  };
+
+  type downloadStudentExcelParams = {
+    param: StudentQuery;
   };
 
   type getAccountParams = {
@@ -353,6 +477,16 @@ declare namespace API {
     param: ActivityCategoryStatQuery;
   };
 
+  type getActivityLocationParams = {
+    id: number;
+  };
+
+  type getActivityLocationsParams = {
+    current?: number;
+    pageSize?: number;
+    param: ActivityLocationQuery;
+  };
+
   type getActivityParams = {
     id: number;
   };
@@ -364,7 +498,7 @@ declare namespace API {
   };
 
   type getClassListParams = {
-    college: string;
+    param: StudentQuery;
   };
 
   type getCommentParams = {
@@ -375,6 +509,10 @@ declare namespace API {
     current?: number;
     pageSize?: number;
     param: CommentQuery;
+  };
+
+  type getMenuListParams = {
+    query: MenuQuery;
   };
 
   type getMyActivitysParams = {
@@ -391,6 +529,10 @@ declare namespace API {
     current?: number;
     pageSize?: number;
     param: RegistrationQuery;
+  };
+
+  type getRoleMenusParams = {
+    roleId: number;
   };
 
   type getRoleParams = {
@@ -423,6 +565,20 @@ declare namespace API {
     param: UserQuery;
   };
 
+  type ImportRowResult = {
+    success?: boolean;
+    message?: string;
+  };
+
+  type ImportTotalResult = {
+    success?: ImportRowResult[];
+    failed?: ImportRowResult[];
+  };
+
+  type isCheckinParams = {
+    activityId: number;
+  };
+
   type isCommentParams = {
     activityId: number;
   };
@@ -443,6 +599,11 @@ declare namespace API {
 
   type ListResultActivityCategoryVO = {
     list?: ActivityCategoryVO[];
+    total?: number;
+  };
+
+  type ListResultActivityLocationVO = {
+    list?: ActivityLocationVO[];
     total?: number;
   };
 
@@ -476,6 +637,113 @@ declare namespace API {
     total?: number;
   };
 
+  type Menu = {
+    /** 菜单ID */
+    menuId?: number;
+    /** 父菜单ID */
+    parentId?: number;
+    /** 路由名称 */
+    name?: string;
+    /** 路由路径 */
+    path?: string;
+    /** 组件路径 */
+    component?: string;
+    /** 重定向地址 */
+    redirect?: string;
+    /** 菜单标题 */
+    title?: string;
+    /** 图标 */
+    icon?: string;
+    /** 排序 */
+    sortOrder?: number;
+    /** 是否隐藏 */
+    hidden?: boolean;
+    /** 总是显示 */
+    alwaysShow?: boolean;
+    /** 是否缓存 */
+    keepAlive?: boolean;
+    /** 是否显示面包屑 */
+    breadcrumb?: boolean;
+    /** 激活菜单 */
+    activeMenu?: string;
+    /** 不显示标签页 */
+    noTagsView?: boolean;
+    /** 是否可跳转 */
+    canTo?: boolean;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
+    /** 0禁用 ，1启用 */
+    status?: number;
+  };
+
+  type MenuQuery = {
+    /** 菜单ID */
+    menuId?: number;
+    /** 父菜单ID */
+    parentId?: number;
+    /** 路由名称 */
+    name?: string;
+    /** 路由路径 */
+    path?: string;
+    /** 组件路径 */
+    component?: string;
+    /** 重定向地址 */
+    redirect?: string;
+    /** 菜单标题 */
+    title?: string;
+    /** 图标 */
+    icon?: string;
+    /** 排序 */
+    sortOrder?: number;
+    /** 是否隐藏 */
+    hidden?: boolean;
+    /** 总是显示 */
+    alwaysShow?: boolean;
+    /** 是否缓存 */
+    keepAlive?: boolean;
+    /** 是否显示面包屑 */
+    breadcrumb?: boolean;
+    /** 激活菜单 */
+    activeMenu?: string;
+    /** 不显示标签页 */
+    noTagsView?: boolean;
+    /** 是否可跳转 */
+    canTo?: boolean;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
+    /** 0禁用 ，1启用 */
+    status?: number;
+  };
+
+  type MenuVO = {
+    menuId?: number;
+    parentId?: number;
+    name?: string;
+    path?: string;
+    component?: string;
+    redirect?: string;
+    meta?: MetaVO;
+    sortOrder?: number;
+    status?: number;
+  };
+
+  type MetaVO = {
+    title?: string;
+    icon?: string;
+    hidden?: boolean;
+    alwaysShow?: boolean;
+    noCache?: boolean;
+    breadcrumb?: boolean;
+    activeMenu?: string;
+    noTagsView?: boolean;
+    canTo?: boolean;
+    permission?: string[];
+  };
+
   type registerActivityParams = {
     activityId: number;
   };
@@ -483,7 +751,7 @@ declare namespace API {
   type Registration = {
     /** 报名id */
     registrationId?: number;
-    /** 学生学号 */
+    /** 学生用户id */
     studentId?: string;
     /** 活动id */
     activityId?: number;
@@ -491,12 +759,20 @@ declare namespace API {
     status?: number;
     /** 报名时间 */
     createTime?: string;
+    /** 是否已打卡 0未打卡 1已打卡 */
+    isCheckIn?: boolean;
+    /** 打卡时间 */
+    checkInTime?: string;
+    /** 打卡纬度 */
+    checkInLat?: number;
+    /** 打卡经度 */
+    checkInLng?: number;
   };
 
   type RegistrationQuery = {
     /** 报名id */
     registrationId?: number;
-    /** 学生学号 */
+    /** 学生用户id */
     studentId?: string;
     /** 活动id */
     activityId?: number;
@@ -504,12 +780,20 @@ declare namespace API {
     status?: number;
     /** 报名时间 */
     createTime?: string;
+    /** 是否已打卡 0未打卡 1已打卡 */
+    isCheckIn?: boolean;
+    /** 打卡时间 */
+    checkInTime?: string;
+    /** 打卡纬度 */
+    checkInLat?: number;
+    /** 打卡经度 */
+    checkInLng?: number;
   };
 
   type RegistrationVO = {
     /** 报名id */
     registrationId?: number;
-    /** 学生学号 */
+    /** 学生用户id */
     studentId?: string;
     /** 活动id */
     activityId?: number;
@@ -517,6 +801,20 @@ declare namespace API {
     status?: number;
     /** 报名时间 */
     createTime?: string;
+    /** 是否已打卡 0未打卡 1已打卡 */
+    isCheckIn?: boolean;
+    /** 打卡时间 */
+    checkInTime?: string;
+    /** 打卡纬度 */
+    checkInLat?: number;
+    /** 打卡经度 */
+    checkInLng?: number;
+    /** 用户名 */
+    userName?: string;
+    /** 学院名称 */
+    collegeName?: string;
+    /** 学号 */
+    schoolId?: string;
   };
 
   type Role = {
@@ -526,6 +824,11 @@ declare namespace API {
     cname?: string;
     /** 角色英文名称 */
     ename?: string;
+  };
+
+  type RoleMenuDTO = {
+    roleId?: number;
+    menuIds?: number[];
   };
 
   type RoleQuery = {
@@ -544,6 +847,20 @@ declare namespace API {
     cname?: string;
     /** 角色英文名称 */
     ename?: string;
+  };
+
+  type RouteVO = {
+    routes?: MenuVO[];
+    permissions?: string[];
+  };
+
+  type Sorter = {
+    /** 排序字段 */
+    column?: string;
+    /** 排序方式 asc/desc */
+    mode?: string;
+    /** 是否自定义字段 */
+    customField?: boolean;
   };
 
   type Student = {
@@ -619,6 +936,10 @@ declare namespace API {
     id: number;
   };
 
+  type updateActivityLocationParams = {
+    id: number;
+  };
+
   type updateActivityParams = {
     id: number;
   };
@@ -647,6 +968,13 @@ declare namespace API {
     token?: string;
   };
 
+  type UserChangePasswordDTO = {
+    /** 旧密码 */
+    oldPassword: string;
+    /** 新密码 */
+    newPassword: string;
+  };
+
   type UserCreateParm = {
     /** 学号/学工号 */
     userId?: string;
@@ -666,7 +994,7 @@ declare namespace API {
 
   type UserPasswordLoginDTO = {
     /** 学号 */
-    userId: string;
+    studentId: string;
     /** 密码 */
     password: string;
   };
@@ -684,6 +1012,15 @@ declare namespace API {
     avatar?: string;
     /** 性别 */
     gender?: string;
+    /** 角色id */
+    roleId?: number;
+  };
+
+  type UserResetPasswordDTO = {
+    /** 用户id */
+    userId: string;
+    /** 新密码 */
+    newPassword: string;
   };
 
   type UserVO = {
@@ -699,7 +1036,12 @@ declare namespace API {
     avatar?: string;
     /** 性别 */
     gender?: string;
+    /** 角色列表 */
     roles?: Role[];
+    /** 是否绑定微信 */
+    bindWX?: boolean;
+    /** 是否设置密码 */
+    setPassword?: boolean;
   };
 
   type UserWXLoginDTO = {

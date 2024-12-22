@@ -87,6 +87,19 @@ export async function getMyActivitys(
   });
 }
 
+/** 统计最近一个月内的活动统计情况 GET /activity/statistics-recent-month */
+export async function getActivityRecentMonthStatistics(options?: {
+  [key: string]: any;
+}) {
+  return request<API.ActivityRecentMonthStatVO[]>(
+    "/activity/statistics-recent-month",
+    {
+      method: "GET",
+      ...(options || {}),
+    }
+  );
+}
+
 /** 修改指定信息 PUT /activity/update/${param0} */
 export async function updateActivity(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

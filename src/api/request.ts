@@ -1,12 +1,18 @@
 import { useUserStore } from '@/stores/user';
 
-import { BASE_URL } from "../constants";
+import { BASE_URL, BASE_URL_COMMON } from "../constants";
 export const request = <T> (url: string, options: any): Promise<T> => new Promise((resolve, reject) => {
+    let baseUrl = BASE_URL
     console.log(url,options)
+    //请求头为/common时切换服务器目录
+    if(url.includes('/common')){
+        baseUrl = BASE_URL_COMMON
+    }
+    
     uni.request({
       ...options,
       data: options.data ?? options.params,
-      url: `${BASE_URL}${url}`,
+      url: `${baseUrl}${url}`,
       timeout: 10000,
       withCredentials: true,
       // #ifdef MP-WEIXIN
@@ -15,7 +21,7 @@ export const request = <T> (url: string, options: any): Promise<T> => new Promis
       },
       // #endif
       success: (res: any) => {
-        console.log(res)
+        // console.log('success',res)
         if (res.statusCode === 200) {
           resolve(res.data.data);
         } else if (res.statusCode === 401) {
@@ -26,6 +32,7 @@ export const request = <T> (url: string, options: any): Promise<T> => new Promis
         }
       },
       fail: (res: any) => {
+        // console.log('fail',res)
         reject(res);
         console.log('fail' + JSON.stringify(res));
       },
