@@ -27,12 +27,22 @@
             placeholder="请输入工号"
             v-model="form.studentId"
           />
-          <input 
-            class="input-item" 
-            type="safe-password" 
-            placeholder="请输入密码"
-            v-model="form.password"
-          />
+          <view class="password-input">
+            <input 
+              class="input-item" 
+              :password="!showPassword"
+              type="text" 
+              placeholder="请输入密码"
+              v-model="form.password"
+            />
+            <view class="password-icon" @tap="togglePassword">
+              <uni-icons 
+                :type="showPassword ? 'eye' : 'eye-slash'" 
+                size="20" 
+                color="#999"
+              />
+            </view>
+          </view>
         </template>
 
         <!-- 学生认证表单 -->
@@ -93,14 +103,13 @@
             class="input-item picker" 
             mode="selector" 
             :range="classOptions"
-            :disabled="!form.college  || isLoadingClasses"
             @change="handleClassChange"
           >
             <text :class="{ placeholder: !form.classes }">
               {{ 
                 isLoadingClasses 
                   ? '加载中...' 
-                  : (form.classes || (!form.college  ? '请先选择学院' : '请选择班级'))
+                  : (form.classes ||  '请选择班级')
               }}
             </text>
           </picker>
@@ -156,12 +165,17 @@ const fetchCollegeList = async () => {
 }
 
 // 获取班级列表的函数
-const fetchClasses = async (college: string) => {
+const fetchClasses = async () => {
   isLoadingClasses.value = true
+  // 将params转换为StudentQuery
+  const studentQuery: API.StudentQuery = {
+    ...(form.value.college ? { college: form.value.college } : {}),
+    ...(form.value.classes ? { classes: form.value.classes } : {}),
+    ...(form.value.grade ? { grade: form.value.grade } : {}),
+  }
   try {
-    const response = await getClassList({
-      college,
-    })  
+    const response = await getClassList({param: studentQuery})
+      
     console.log(response)
     classOptions.value = response as string[]
   } catch (error) {
@@ -178,10 +192,12 @@ const fetchClasses = async (college: string) => {
 // 处理选择器变化
 const handleGenderChange = (e: any) => {
   form.value.gender = genderOptions[e.detail.value]
+  fetchClasses()
 }
 
 const handleGradeChange = (e: any) => {
   form.value.grade = gradeOptions[e.detail.value]
+  fetchClasses()
 }
 
 
@@ -189,7 +205,7 @@ const handleCollegeChange = async (e: any) => {
   form.value.college = collegeOptions.value[e.detail.value]
   form.value.classes = '' // 清空已选择的班级
   
-  await fetchClasses(form.value.college)
+  await fetchClasses()
   
 }
 
@@ -213,7 +229,7 @@ const handleSubmit = () => {
         !form.value.type) {
 
       uni.showToast({
-        title: '请填写完整信息',
+        title: '请填写完整���',
         icon: 'none'
       })
       return
@@ -255,6 +271,14 @@ const handleSubmit = () => {
 onMounted(async () => {
   await fetchCollegeList()
 })
+
+// 修改密码显示控制
+const showPassword = ref(false)
+
+// 切换密码显示/隐藏
+const togglePassword = () => {
+  showPassword.value = !showPassword.value
+}
 </script>
 
 <style scoped>
@@ -341,7 +365,7 @@ onMounted(async () => {
   color: #999;
 }
 
-/* 添加禁用状态样式 */
+/* 添加禁用态样式 */
 .picker[disabled] {
   background-color: #f5f5f5;
   color: #999;
@@ -351,5 +375,24 @@ onMounted(async () => {
 .picker.loading {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.password-input {
+  position: relative;
+  margin-bottom: 20rpx;
+}
+
+.password-icon {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40rpx;
+  height: 40rpx;
+  padding: 10rpx;
+}
+
+.password-input .input-item {
+  padding-right: 80rpx;
 }
 </style> 
