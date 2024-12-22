@@ -12,7 +12,7 @@
       <!-- 问题输入区域 -->
       <view class="question-section">
         <text class="question-title">提问</text>
-        <text class="question-subtitle">您好,我是基于大语言模型的AI智能助手,请问我有什么可以帮助你的?</text>
+        <text class="question-subtitle" :user-select="!isLoading">{{ isLoading ? 'AI正在思考中.. .' : answerMessage }}</text>
         <!-- 常见问题 -->
         <view class="faq-section">
           <text class="faq-title">常见问题：</text>
@@ -42,15 +42,28 @@
 </template>
 
 <script setup lang="ts">
+import { ai } from '@/api/servers/api/ai';
 import { ref } from 'vue'
-
+const defaultMessage = '您好,我是基于大语言模型的AI智能助手,请问我有什么可以帮助你的?'
+const answerMessage = ref(defaultMessage)
 const inputMessage = ref('')
-
+const isLoading = ref(false)
 // 发送消息
-const sendMessage = () => {
-  if (!inputMessage.value.trim()) return
-  // TODO: 处理发送消息逻辑
-  inputMessage.value = ''
+const sendMessage = async () => {
+  if (isLoading.value || !inputMessage.value.trim()) return
+  isLoading.value = true
+  try {
+    const res = await ai({
+      userInput: inputMessage.value
+    })
+    console.log(res)
+    answerMessage.value = res
+  } catch (error) {
+    console.error(error)
+    answerMessage.value = '服务器异常'+error
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // 选择常见问题
@@ -130,6 +143,7 @@ const goBack = () => {
   background: #e3f2fd;
   padding: 20rpx;
   border-radius: 12rpx;
+  white-space: pre-wrap;
 }
 
 .question-input {
