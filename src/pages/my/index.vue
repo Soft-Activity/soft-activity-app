@@ -1,8 +1,24 @@
 <template>
   <view class="container">
     <!-- 用户信息区域 -->
-    <view class="user-section" @tap="handleUserClick">
-      <image class="avatar" :src="userAvatar" />
+    <view class="user-section">
+      <!-- 修改头像按钮 -->
+      <button 
+        class="avatar-btn"
+        open-type="chooseAvatar" 
+        @chooseavatar="onChooseAvatar"
+        v-if="isLoggedIn"
+      >
+        <image class="avatar" :src="userAvatar" />
+      </button>
+      <!-- 未登录时的头像 -->
+      <image 
+        v-else 
+        class="avatar" 
+        :src="userAvatar"
+        @tap="handleUserClick"
+      />
+      
       <view class="user-info" v-if="isLoggedIn">
         <text class="nickname">{{ userName }}</text>
         <view class="user-details">
@@ -27,10 +43,10 @@
             <uni-icons type="right" size="16"></uni-icons>
           </view>
         </view>
-        <view class="menu-item" @tap="goToList('history')">
-          <text>历史活动</text>
+        <view class="menu-item" @tap="goToList('checkin')">
+          <text>待打卡活动</text>
           <view class="menu-right">
-            <text class="count-text">{{ historyCount }}</text>
+            <text class="count-text">{{ checkinCount }}</text>
             <uni-icons type="right" size="16"></uni-icons>
           </view>
         </view>
@@ -38,6 +54,13 @@
           <text>待评价活动</text>
           <view class="menu-right">
             <text class="count-text">{{ pendingCount }}</text>
+            <uni-icons type="right" size="16"></uni-icons>
+          </view>
+        </view>
+        <view class="menu-item" @tap="goToList('history')">
+          <text>历史活动</text>
+          <view class="menu-right">
+            <text class="count-text">{{ historyCount }}</text>
             <uni-icons type="right" size="16"></uni-icons>
           </view>
         </view>
@@ -69,7 +92,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { onShow } from '@dcloudio/uni-app';
 import { getMyActivitys } from '@/api/servers/api/activity';
-import { loginByWx } from '@/api/servers/api/user';
+import { loginByWx, updateUser } from '@/api/servers/api/user';
+import { uploadImage } from '@/api/servers/api/commonController';
+import { BASE_URL, BASE_URL_COMMON } from '@/constants';
+import { MyActivityType, myActivityTypeQueryMap } from '@/constants/activity';
 
 const userStore = useUserStore()
 
@@ -87,6 +113,7 @@ const userAvatar = computed(() => userStore.userInfo.avatar || '/static/default-
 
 // 模拟活动数量数据
 const enrolledCount = ref(0)
+const checkinCount = ref(0)
 const historyCount = ref(0)
 const pendingCount = ref(0)
 
@@ -156,34 +183,33 @@ const handleUnbind = () => {
 }
 
 const fetchActivityCount = async () => {
-  const enrolledRes = await getMyActivitys({
-    current: 0,
-    pageSize: 1000,
-    param: {
-      //@ts-ignore
-      statuses: '0,1'
-    }
-  })
+  
+  const [enrolledRes, checkinRes, pendingRes, historyRes] = await Promise.all([ 
+    getMyActivitys({
+      current: 0,
+      pageSize: 1000,
+      param: myActivityTypeQueryMap[MyActivityType.ENROLLED]
+    }),
+    getMyActivitys({
+      current: 0,
+      pageSize: 1000,
+      param: myActivityTypeQueryMap[MyActivityType.CHECKIN]
+    }),
+    getMyActivitys({
+      current: 0,
+      pageSize: 1000,
+      param: myActivityTypeQueryMap[MyActivityType.PENDING]
+    }),
+    getMyActivitys({
+      current: 0,
+      pageSize: 1000,
+      param: myActivityTypeQueryMap[MyActivityType.HISTORY]
+    })
+  ])
   enrolledCount.value = enrolledRes?.total || 0
-  const historyRes = await getMyActivitys({
-    current: 0,
-    pageSize: 1000,
-    param: {
-      //@ts-ignore
-      statuses: '2'
-    }
-  })
-  historyCount.value = historyRes?.total || 0
-  const pendingRes = await getMyActivitys({
-    current: 0,
-    pageSize: 1000,
-    param: {
-      //@ts-ignore
-      statuses: '2',
-      isStudentComment: false
-    }
-  })
+  checkinCount.value = checkinRes?.total || 0
   pendingCount.value = pendingRes?.total || 0
+  historyCount.value = historyRes?.total || 0
 }
 
 onShow(async () => {
@@ -197,6 +223,43 @@ const goToAiChat = () => {
     url: '/pages/my/ai-chat'
   })
 }
+
+// 处理头像选择
+const onChooseAvatar = async (e: any) => {
+  console.log('e', e)
+  const { avatarUrl } = e.detail
+  uni.uploadFile({
+    url: `${BASE_URL_COMMON}/upload/image`,//请求路径
+    filePath: avatarUrl,
+    fileType: "image",
+    name: 'image',
+    header: { 'token': userStore.token },
+    success: async uploadFileRes => {
+      console.log('uploadFileRes', uploadFileRes)
+      let data = JSON.parse(uploadFileRes.data);
+      //更新用户头像
+      try{
+        await updateUser({
+          id: userStore.userInfo.userId!!,
+        },{
+          avatar: data.data
+        })
+        userStore.setUserInfo({ ...userStore.userInfo, avatar: data.data })
+        uni.showToast({
+          title: '头像更新成功',
+          icon: 'none'
+        })
+      }catch(error){
+        console.error('更新用户头像失败:', error)
+      }
+    },
+    fail: (error) => {
+      uni.showToast({
+        title: "保存错误",
+      });
+    }
+  });
+ }
 </script>
 
 <style scoped>
@@ -364,5 +427,18 @@ const goToAiChat = () => {
   border-radius: 20rpx;
   min-width: 40rpx;
   text-align: center;
+}
+
+/* 修改头像按钮样式 */
+.avatar-btn {
+  padding: 0;
+  background: none;
+  border: none;
+  line-height: normal;
+  margin: 0;
+}
+
+.avatar-btn::after {
+  border: none;
 }
 </style> 

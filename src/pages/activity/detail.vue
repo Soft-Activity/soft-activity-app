@@ -2,32 +2,23 @@
   <view class="container">
     <!-- 活动封面图 -->
     <view class="cover-container">
-      <image 
-        v-if="false" 
-        src="" 
-        mode="widthFix" 
-        class="cover-image"
-      />
-      <view 
-        v-else 
-        class="cover-gradient"
-        :style="getCoverStyle"
-      >
+      <image v-if="false" src="" mode="widthFix" class="cover-image" />
+      <view v-else class="cover-gradient" :style="getCoverStyle">
         <text class="gradient-title">{{ activityDetail.name }}</text>
       </view>
     </view>
-    
+
     <!-- 活动基本信息 -->
     <view class="info-section">
       <view class="title">{{ activityDetail.name }}</view>
       <view class="status-tag" :class="getStatusClass(activityDetail)">
         {{ getStatusText(activityDetail) }}
       </view>
-      
+
       <view class="info-item">
         <uni-icons type="calendar" size="16"></uni-icons>
         <view class="time-info">
-          <text>开始时间：{{formatDate(activityDetail.startTime || '') }}</text>
+          <text>开始时间：{{ formatDate(activityDetail.startTime || '') }}</text>
           <text>结束时间：{{ formatDate(activityDetail.endTime || '') }}</text>
         </view>
       </view>
@@ -49,7 +40,7 @@
       </view>
       <view class="info-item">
         <uni-icons type="calendar" size="16"></uni-icons>
-        <text>创建时间：{{ formatDate(activityDetail.createTime || '')  }}</text>
+        <text>创建时间：{{ formatDate(activityDetail.createTime || '') }}</text>
       </view>
     </view>
 
@@ -68,9 +59,9 @@
       <view class="section-title">活动评价</view>
       <view class="comment-item" v-for="comment in comments" :key="comment.commentId">
         <view class="comment-header">
-          <image :src="comment.student?.avatar" class="user-avatar"/>
+          <image :src="comment.student?.avatar" class="user-avatar" />
           <text class="username">{{ comment.student?.name }}</text>
-          <uni-rate :value="comment.rating" readonly size="15"/>
+          <uni-rate :value="comment.rating" readonly size="15" />
         </view>
         <view class="comment-content">{{ comment.content }}</view>
       </view>
@@ -80,18 +71,29 @@
     <view class="action-bar">
       <!-- 活动未开始时显示报名/取消报名按钮 -->
       <template v-if="activityDetail.status === ActivityStatus.NOT_STARTED">
-         <!-- 根据报名状态添加不同样式 -->
-        <button 
-          class="action-button"
-          :class="{ 'action-button-enrolled': isEnrolled }"
-          @tap="handleEnroll"
-        >
+        <!-- 根据报名状态添加不同样式 -->
+        <button class="action-button" :class="{ 'action-button-enrolled': isEnrolled }" @tap="handleEnroll">
           {{ isEnrolled ? '取消报名' : '立即报名' }} <!-- 根据报名状态显示不同文本 -->
         </button>
       </template>
       <!-- 活动结束且已报名但未评价时显示评价按钮 -->
       <template v-else-if="activityDetail.status === ActivityStatus.ENDED && isEnrolled && !hasCommented">
         <button class="action-button action-button-comment" @tap="showCommentModal">评价活动</button>
+      </template>
+      <!-- 活动进行中的活动可以打卡 -->
+      <template v-else-if="activityDetail.status === ActivityStatus.ONGOING && isEnrolled && activityDetail?.isCheckIn ">
+        <template v-if="hasCheckedIn">
+          <button class="action-button action-button-checkin" :disabled="true">已打卡</button>
+        </template>
+        <template v-else-if="!isCheckInTime">
+          <button class="action-button action-button-checkin" :disabled="true">还未到打卡时间</button>
+        </template>
+        <template v-else>
+          <button class="action-button action-button-checkin" @tap="handleCheckIn">活动打卡</button>
+        </template>
+      </template>
+      <template v-else-if="activityDetail.status === ActivityStatus.ONGOING && isEnrolled && !activityDetail?.isCheckIn">
+        <button class="action-button action-button-checkin" :disabled="true">活动无打卡</button>
       </template>
     </view>
 
@@ -103,11 +105,7 @@
           <text>评分：</text>
           <uni-rate v-model="commentForm.rating" />
         </view>
-        <textarea 
-          v-model="commentForm.content"
-          placeholder="请输入您的评价"
-          class="comment-textarea"
-        />
+        <textarea v-model="commentForm.content" placeholder="请输入您的评价" class="comment-textarea" />
         <button class="submit-button" @tap="submitComment">提交评价</button>
       </view>
     </uni-popup>
@@ -117,13 +115,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { generateActivityGradient } from '@/utils/colors'
-import { addRegistration, cancelRegister, isRegister, registerActivity } from '@/api/servers/api/registration';
+import { addRegistration, cancelRegister, checkInActivity, isRegister, registerActivity } from '@/api/servers/api/registration';
 import { useUserStore } from '@/stores/user';
 import { ActivityStatus, ActivityStatusClass, ActivityStatusText } from '@/types/activity';
 import { getActivity } from '@/api/servers/api/activity';
 import { addComment, getComments, isComment } from '@/api/servers/api/comment';
 import { onShow } from '@dcloudio/uni-app';
 import dayjs from 'dayjs';
+import { isCheckin } from '@/api/servers/api/registration';
 
 const userStore = useUserStore()
 
@@ -136,6 +135,7 @@ const formatDate = (date: string) => {
 const activityDetail = ref<API.ActivityVO>({} as API.ActivityVO)
 const comments = ref<API.CommentVO[]>([])
 const isEnrolled = ref(false)
+const hasCheckedIn = ref(false)
 const hasCommented = ref(false)
 const popup = ref()
 
@@ -169,14 +169,20 @@ const loadActivityDetail = async () => {
     const currentPage = pages[pages.length - 1] as any
     const { id } = currentPage.options || {}
     // 模拟数据加载
-    activityDetail.value = await getActivity({id: Number(id)})
+    activityDetail.value = await getActivity({ id: Number(id) })
 
     // 设置用户为已报名状态，这样可以看到评价按钮
-    isEnrolled.value = await isRegister({activityId: Number(id)})
-    hasCommented.value = await isComment({activityId: Number(id)})
-   
-    console.log('isEnrolled',isEnrolled.value)
-    console.log('hasCommented',hasCommented.value)
+    isEnrolled.value = await isRegister({ activityId: Number(id) })
+    if(isEnrolled.value){
+      if(activityDetail.value.status === ActivityStatus.ONGOING){
+        hasCheckedIn.value = await isCheckin({ activityId: Number(id) })
+      }else{
+        hasCommented.value = await isComment({ activityId: Number(id) })
+      }
+    }
+
+    console.log('isEnrolled', isEnrolled.value)
+    console.log('hasCommented', hasCommented.value)
   } catch (error) {
     showError('加载活动详情失败')
     console.error('加载活动详情错误:', error)
@@ -207,18 +213,18 @@ const handleEnroll = async () => {
     showError('活动信息不完整')
     return
   }
-  
+
   try {
     if (isEnrolled.value) {
       // 如果已报名,则执行取消报名操作
       try {
-        const res = await cancelRegister({activityId: Number(activityDetail.value.activityId)})
-        if(res){
-          uni.showToast({ 
+        const res = await cancelRegister({ activityId: Number(activityDetail.value.activityId) })
+        if (res) {
+          uni.showToast({
             title: '已取消报名',
             icon: 'success'
           })
-        }else{
+        } else {
           throw new Error('取消报名失败')
         }
       } catch (error) {
@@ -230,13 +236,13 @@ const handleEnroll = async () => {
         const res = await registerActivity({
           activityId: Number(activityDetail.value.activityId)
         })
-        if(res){
+        if (res) {
           // 报名成功后显示提示
-          uni.showToast({ 
+          uni.showToast({
             title: '报名成功',
             icon: 'success'
           })
-        }else{
+        } else {
           throw new Error('报名失败')
         }
       } catch (error) {
@@ -274,20 +280,20 @@ const submitComment = async () => {
       rating: commentForm.value.rating,
       content: commentForm.value.content
     })
-    if(res){
-      uni.showToast({ 
+    if (res) {
+      uni.showToast({
         title: '评价成功',
         icon: 'success'
       })
-    }else{
+    } else {
       throw new Error('评价失败')
     }
-    
+
     popup.value.close()
     hasCommented.value = true
     // 重新加载评论列表
     await loadComments()
-    
+
     // 清空表单
     commentForm.value = {
       rating: 0,
@@ -309,9 +315,53 @@ const getCoverStyle = computed(() => {
   }
 })
 
+const isCheckInTime = computed(() => {
+  if(activityDetail.value.startTime== null || activityDetail.value.endTime== null){
+    return false
+  }
+  return dayjs().isAfter(dayjs(activityDetail.value.startTime)) && dayjs().isBefore(dayjs(activityDetail.value.endTime))
+})
+
+// 处理打卡
+const handleCheckIn = async () => {
+    //使用火星标
+    uni.getLocation({
+      type: 'gcj02',
+      isHighAccuracy: true,
+      success: async (res) => {
+        console.log('res', res)
+        const latitude = res.latitude
+        const longitude = res.longitude
+        try {
+          const res = await checkInActivity({
+            activityId: Number(activityDetail.value.activityId),
+            gcj02Longitude: longitude,
+            gcj02Latitude: latitude
+          })
+          if (res) {
+            uni.showToast({
+              title: '打卡成功',
+              icon: 'success'
+            })
+            hasCheckedIn.value = true
+          } else {
+            throw new Error('打卡失败')
+          }
+        } catch (error) {
+          console.error('打卡失败', error)
+          uni.showModal({
+            title: '打卡失败',
+            content: typeof error === 'string' ? error : '打卡失败',
+            showCancel: false
+          })
+        }
+      }
+    })
+}
+
 onShow(async () => {
   await loadActivityDetail()
-  if(activityDetail.value.status === ActivityStatus.ENDED){
+  if (activityDetail.value.status === ActivityStatus.ENDED) {
     await loadComments()
   }
 })
@@ -400,7 +450,8 @@ onShow(async () => {
   word-break: break-all;
 }
 
-.detail-section, .comments-section {
+.detail-section,
+.comments-section {
   margin-top: 20rpx;
   padding: 30rpx;
   background: #fff;
@@ -498,6 +549,10 @@ onShow(async () => {
   background: #FFC107;
 }
 
+.action-button-checkin {
+  background: #018d71;
+}
+
 .action-button:active {
   transform: scale(0.98);
   opacity: 0.9;
@@ -585,4 +640,4 @@ onShow(async () => {
   color: #666;
   font-size: 28rpx;
 }
-</style> 
+</style>

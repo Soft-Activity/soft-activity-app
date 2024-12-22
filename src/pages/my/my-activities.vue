@@ -11,7 +11,7 @@
     >
       <!-- 已报名活动列表 -->
       <activity-list 
-        v-if="type === 'enrolled'" 
+        v-if="type === 'enrolled' || type === 'checkin'" 
         :activities="activities" 
       />
       
@@ -38,6 +38,7 @@ import { ref, computed, onMounted } from 'vue'
 import ActivityList from '../activity/components/ActivityList.vue'
 import HistoryActivityList from '../activity/components/HistoryActivityList.vue'
 import { getMyActivitys } from '@/api/servers/api/activity';
+import { myActivityTypeQueryMap } from '@/constants/activity';
 
 
 
@@ -46,7 +47,7 @@ const page = ref(1)
 const pageSize = ref(10)
 const isRefreshing = ref(false)
 const loadMoreStatus = ref<'more' | 'loading' | 'noMore'>('more')
-const type = ref<'enrolled' | 'history' | 'pending'>('enrolled')
+const type = ref<'enrolled' | 'history' | 'pending' | 'checkin'>('enrolled')
 
 // 获取空状态文本
 const getEmptyText = computed(() => {
@@ -65,17 +66,13 @@ const loadActivities = async (isRefresh = false) => {
     console.log('page',page.value)
     console.log('isRefresh',isRefresh)
     //根据switch的值，获取不同的活动列表
-    const statuses = type.value === 'enrolled' ? '0,1' : '2'
+    const queryParams = myActivityTypeQueryMap[type.value]
 
     const newActivities = await getMyActivitys(
       {
         current: page.value,
         pageSize: pageSize.value,
-        param: {
-          //@ts-ignore
-          statuses,
-          ...(type.value === 'pending' ? {isStudentComment:false} : {})
-        }
+        param: queryParams
       }
     )
 
@@ -120,7 +117,8 @@ onMounted(() => {
     const titleMap = {
       'enrolled': '已报名活动',
       'history': '历史活动',
-      'pending': '待评价活动'
+      'pending': '待评价活动',
+      'checkin': '待打卡活动'
     }
     uni.setNavigationBarTitle({
       title: titleMap[pageType as keyof typeof titleMap] || '我的活动'
